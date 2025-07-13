@@ -35,17 +35,20 @@ def locate_hoop():
     return 0, 0
 
 def calculate_u_and_alpha(ball_x, ball_y, hoop_x, hoop_y):
-    a = hoop_x - ball_x
-    b = ball_y - hoop_y
+    a, b = ball_x, ball_y
+    c, d = hoop_x, hoop_y
 
-    minimum_alpha = math.atan(b/a)
+    minimum_alpha = math.atan((d - b)/(c - a))
     alpha = minimum_alpha + 0.1
-    u = math.sqrt(4.9) * abs(a / math.cos(alpha)) / math.sqrt(a * math.tan(alpha) - b)
+    u = math.sqrt(4.9) * abs((c - a) / math.cos(alpha)) / math.sqrt(b - d + (c - a) * math.tan(alpha))
 
     return u, alpha
 
-def basketball_pos(t, u, alpha, inital_x, initial_y):
-    return inital_x + u * math.cos(alpha) * t, initial_y - u * math.sin(alpha) * t - 4.9 * t ** 2
+def basketball_pos(t, u, alpha, initial_x, initial_y, hoop_x, hoop_y):
+    t = min(t, (hoop_x - initial_x) / (u * math.cos(alpha)))
+    normalized_t = t / ((hoop_x - initial_x) / (u * math.cos(alpha)))
+    height_on_line = (1 - normalized_t) * initial_y + normalized_t * hoop_y
+    return initial_x + u * math.cos(alpha) * t, initial_y + (u * math.sin(alpha) * t - 4.9 * t ** 2)
 
 ball_x, ball_y = locate_ball()
 hoop_x, hoop_y = locate_hoop()
@@ -64,7 +67,7 @@ while running:
     pygame.draw.circle(screen, 'blue', (ball_x, ball_y), 5)
     pygame.draw.circle(screen, 'purple', (hoop_x, hoop_y), 5)
 
-    b_x, b_y = basketball_pos(time, u, alpha, ball_x, ball_y)
+    b_x, b_y = basketball_pos(time, u, alpha, ball_x, ball_y, hoop_x, hoop_y)
     pygame.draw.circle(screen, 'orange', (b_x, b_y), 10)
 
     pygame.display.flip()
